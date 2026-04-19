@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drift — deep work, quietly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="ui-variants.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="nav__logo" href="#">Drift</a>
+    <nav class="nav__links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#testimonials">Stories</a>
+    </nav>
+    <a class="nav__cta" href="#download">Download</a>
+  </header>
+
+  <section
+    class="hero"
+    id="hero"
+    data-uiv-section="hero"
+    data-uiv-names='{"a":"Swiss Broadsheet","b":"Ambient Depth","c":"Midnight Terminal"}'
+  >
+    <div class="hero__inner">
+      <p class="hero__eyebrow">A focus timer, reimagined</p>
+      <h1 class="hero__title">
+        Deep work,<br />
+        <em>quietly.</em>
+      </h1>
+      <p class="hero__lede">
+        Drift is a calm, desktop-first timer that blocks the noise, tracks what actually
+        gets done, and disappears when you don't need it.
+      </p>
+      <div class="hero__ctas">
+        <a class="btn btn--primary" href="#download">Download for macOS</a>
+        <a class="btn btn--ghost" href="#how">How it works</a>
+      </div>
+      <p class="hero__meta">Free for individuals · $6/mo Pro · No account required</p>
+    </div>
+    <div class="hero__visual" aria-hidden="true">
+      <div class="hero__timer">
+        <span class="hero__timer-ring"></span>
+        <span class="hero__timer-num">25:00</span>
+        <span class="hero__timer-label">deep focus</span>
+      </div>
+    </div>
+  </section>
+
+  <template data-uiv-for="hero" data-uiv-variant="a">
+    <div class="hva">
+      <header class="hva__top">
+        <span class="hva__brand">DRIFT</span>
+        <span class="hva__top-sep" aria-hidden="true">·</span>
+        <span class="hva__issue">No. 014 &mdash; Spring 2026</span>
+        <span class="hva__top-sep" aria-hidden="true">·</span>
+        <span class="hva__byline">A weekly dispatch on focus</span>
+      </header>
+      <hr class="hva__rule hva__rule--thick" />
+      <div class="hva__grid">
+        <div class="hva__lead">
+          <p class="hva__eyebrow">&sect; 01 &mdash; A focus timer, reimagined</p>
+          <h1 class="hva__headline">Deep work, quietly.</h1>
+        </div>
+        <aside class="hva__aside">
+          <p class="hva__lede">
+            Drift is a calm, desktop-first timer that blocks the noise, tracks what
+            actually gets done, and disappears when you don't need it.
+          </p>
+          <div class="hva__ctas">
+            <a class="btn btn--primary" href="#download">Download for macOS</a>
+            <a class="btn btn--ghost" href="#how">How it works</a>
+          </div>
+          <p class="hva__meta">
+            <span>Free for individuals</span>
+            <span aria-hidden="true">·</span>
+            <span>$6/mo Pro</span>
+            <span aria-hidden="true">·</span>
+            <span>No account required</span>
+          </p>
+        </aside>
+      </div>
+      <hr class="hva__rule" />
+    </div>
+  </template>
+
+  <template data-uiv-for="hero" data-uiv-variant="b">
+    <div class="hvb">
+      <div class="hvb__mesh" aria-hidden="true"></div>
+      <div class="hvb__grain" aria-hidden="true"></div>
+      <div class="hvb__inner">
+        <div class="hvb__content">
+          <p class="hvb__eyebrow">
+            <span class="hvb__dot" aria-hidden="true"></span>
+            A focus timer, reimagined
+          </p>
+          <h1 class="hvb__headline">
+            Deep work,
+            <span class="hvb__headline-accent">quietly.</span>
+          </h1>
+          <p class="hvb__lede">
+            Drift is a calm, desktop-first timer that blocks the noise, tracks what
+            actually gets done, and disappears when you don't need it.
+          </p>
+          <div class="hvb__ctas">
+            <a class="btn btn--primary" href="#download">Download for macOS</a>
+            <a class="btn btn--ghost" href="#how">How it works &rarr;</a>
+          </div>
+          <p class="hvb__meta">Free for individuals · $6/mo Pro · No account required</p>
+        </div>
+        <div class="hvb__stage" aria-hidden="true">
+          <div class="hvb__halo"></div>
+          <div class="hvb__clock">
+            <div class="hvb__clock-ring"></div>
+            <div class="hvb__clock-face">
+              <span class="hvb__clock-num">25:00</span>
+              <span class="hvb__clock-label">deep focus</span>
+            </div>
+          </div>
+          <div class="hvb__chip hvb__chip--one">
+            <span class="hvb__chip-dot"></span>
+            session 014
+          </div>
+          <div class="hvb__chip hvb__chip--two">
+            <span>+2h 14m</span>
+            <span class="hvb__chip-muted">today</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template data-uiv-for="hero" data-uiv-variant="c">
+    <div class="hvc">
+      <div class="hvc__grain" aria-hidden="true"></div>
+      <div class="hvc__inner">
+        <div class="hvc__content">
+          <div class="hvc__statusbar" aria-hidden="true">
+            <span class="hvc__status-dot"></span>
+            <span class="hvc__status-label">drift daemon</span>
+            <span class="hvc__status-sep">/</span>
+            <span class="hvc__status-path">~/focus/main</span>
+            <span class="hvc__status-sep">/</span>
+            <span class="hvc__status-ver">v2.1.0</span>
+          </div>
+          <p class="hvc__eyebrow">// A focus timer, reimagined</p>
+          <h1 class="hvc__headline">
+            Deep work,
+            <span class="hvc__headline-accent">quietly.</span>
+          </h1>
+          <p class="hvc__lede">
+            Drift is a calm, desktop-first timer that blocks the noise, tracks what
+            actually gets done, and disappears when you don't need it.
+          </p>
+          <div class="hvc__ctas">
+            <a class="btn btn--primary" href="#download">
+              <span aria-hidden="true">&darr;</span> Download for macOS
+            </a>
+            <a class="btn btn--ghost" href="#how">How it works</a>
+          </div>
+          <p class="hvc__meta">
+            <span class="hvc__meta-dim">$</span>
+            Free for individuals · $6/mo Pro · No account required
+          </p>
+        </div>
+        <div class="hvc__panel" aria-hidden="true">
+          <div class="hvc__panel-chrome">
+            <span></span><span></span><span></span>
+            <span class="hvc__panel-title">drift &mdash; focus-session</span>
+          </div>
+          <div class="hvc__panel-body">
+            <span class="hvc__panel-line"><span class="hvc__panel-dim">&gt;</span> session start 13:14</span>
+            <span class="hvc__panel-line"><span class="hvc__panel-dim">&gt;</span> blocking 23 sites</span>
+            <span class="hvc__panel-line"><span class="hvc__panel-dim">&gt;</span> journal: <span class="hvc__panel-warm">"reply to Noor"</span></span>
+            <span class="hvc__panel-line hvc__panel-line--big">
+              <span class="hvc__panel-num">25:00</span>
+              <span class="hvc__panel-bar"><span></span></span>
+            </span>
+            <span class="hvc__panel-line"><span class="hvc__panel-dim">&gt;</span> deep focus &mdash; press esc to pause</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <section class="features" id="features">
+    <h2 class="section-title">Small tool, strong opinions.</h2>
+    <div class="features__grid">
+      <article class="feature">
+        <h3>Site & app blocking</h3>
+        <p>One click silences the parts of the internet that steal your morning.</p>
+      </article>
+      <article class="feature">
+        <h3>Session journal</h3>
+        <p>A line of context per session, so you remember what you were doing.</p>
+      </article>
+      <article class="feature">
+        <h3>Menu-bar only</h3>
+        <p>No dock icon, no window. Just a number quietly counting down.</p>
+      </article>
+      <article class="feature">
+        <h3>Local-first</h3>
+        <p>Your sessions stay on your machine. Sync is opt-in and end-to-end encrypted.</p>
+      </article>
+    </div>
+  </section>
+
+  <section
+    class="testimonial"
+    id="testimonials"
+    data-uiv-section="testimonial"
+    data-uiv-names='{"a":"Pull-Quote Brutalist","b":"Editorial Portrait","c":"Dev Log Terminal"}'
+  >
+    <blockquote>
+      "I've tried every pomodoro app. This is the first one that feels like a tool
+      instead of a game."
+    </blockquote>
+    <cite>— Noor A., software engineer</cite>
+  </section>
+
+  <template data-uiv-for="testimonial" data-uiv-variant="a">
+    <figure class="tva">
+      <span class="tva__mark" aria-hidden="true">&ldquo;</span>
+      <blockquote class="tva__quote">
+        I've tried every pomodoro app. This is the first one that feels like a tool
+        instead of a game.
+      </blockquote>
+      <figcaption class="tva__meta">
+        <span>
+          <strong>Noor A.</strong>
+          Software engineer
+        </span>
+        <span class="tva__num">No. 014 — Reviews</span>
+      </figcaption>
+    </figure>
+  </template>
+
+  <template data-uiv-for="testimonial" data-uiv-variant="b">
+    <div class="tvb">
+      <aside class="tvb__card">
+        <div class="tvb__avatar" aria-hidden="true">N</div>
+        <p class="tvb__name">Noor A.</p>
+        <p class="tvb__role">Software engineer</p>
+        <div class="tvb__divider" aria-hidden="true"></div>
+      </aside>
+      <div class="tvb__quote-wrap">
+        <p class="tvb__kicker">What customers say</p>
+        <blockquote class="tvb__quote">
+          I've tried every pomodoro app. This is the first one that feels like a
+          tool instead of a game.
+        </blockquote>
+      </div>
+    </div>
+  </template>
+
+  <template data-uiv-for="testimonial" data-uiv-variant="c">
+    <div class="tvc" role="group" aria-label="Testimonial, terminal style">
+      <div class="tvc__dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="tvc__body">
+        <span class="tvc__line"><span class="tvc__comment"># ~/reviews/drift.log — entry 014</span></span>
+        <span class="tvc__line"><span class="tvc__prompt">$</span> cat testimonial.md</span>
+        <span class="tvc__line"></span>
+        <span class="tvc__line"><span class="tvc__key">author</span>: <span class="tvc__author">Noor A. &lt;software engineer&gt;</span></span>
+        <span class="tvc__line"><span class="tvc__key">rating</span>: <span class="tvc__string">★★★★★</span></span>
+        <span class="tvc__line"><span class="tvc__key">verdict</span>: |</span>
+        <span class="tvc__line">  I've tried every pomodoro app.</span>
+        <span class="tvc__line">  This is the first one that feels like</span>
+        <span class="tvc__line">  a tool instead of a game.</span>
+        <span class="tvc__line"></span>
+        <span class="tvc__line"><span class="tvc__prompt">$</span><span class="tvc__cursor"></span></span>
+      </div>
+    </div>
+  </template>
+
+  <section class="cta" id="download">
+    <h2>Start drifting.</h2>
+    <p>Free download. No signup. Runs offline.</p>
+    <a class="btn btn--primary btn--lg" href="#">Download for macOS →</a>
+  </section>
+
+  <footer class="footer">
+    <p>© 2026 Drift · <a href="#">Privacy</a> · <a href="#">Changelog</a></p>
+  </footer>
+
+  <script src="ui-variants.js"></script>
+</body>
+</html>
