@@ -1,13 +1,25 @@
 ---
 name: ui-variants
-description: When the user wants to explore alternate UI designs for a specific section of a website by generating multiple variants and toggling between them live in the browser. Use when the user says "give me variants of this section," "show alternate designs for the hero," "try 3 versions of this pricing block," "redesign this with options," "A/B the header," "variant toggle," "compare UI options," "cycle through designs," or points to a section and asks for alternatives. Generates 3 distinct redesigns plus keeps the original, injects a dev-only floating toggle chip, and makes switching realtime with no rebuild. For designing a single UI, use frontend-design. For marketing copy variations, use copywriting.
+description: When the user wants to explore alternate UI designs for a specific section of a website by generating multiple variants and toggling between them live in the browser. Use when the user says "give me variants of this section," "show alternate designs for the hero," "try 3 versions of this pricing block," "redesign this with options," "A/B the header," "variant toggle," "compare UI options," "cycle through designs," or points to a section and asks for alternatives. Also handles the promote/teardown loop after exploration: "ship variant B", "promote the bento layout", "finalize this variant", "remove the variant exploration", "tear down variants", "revert the variant scaffolding". Generates 2–4 distinct redesigns plus keeps the original, injects a dev-only floating toggle chip, and makes switching realtime with no rebuild. For designing a single UI, use frontend-design. For marketing copy variations, use copywriting.
 ---
 
 # ui-variants
 
-This skill takes any section of a website and delivers a live A/B/C/D comparison tool in the running page. It (1) generates **3 alternate UI designs** for the section with distinct aesthetic directions, (2) injects a dev-only floating toggle, and (3) wires the toggle so clicking cycles `Original → Variant A → Variant B → Variant C` **in realtime in the browser** — no rebuild, no manual swap.
+This skill takes any section of a website and delivers a live A/B/C/D comparison tool in the running page. It (1) generates alternate UI designs for the section with distinct aesthetic directions, (2) injects a dev-only floating toggle, and (3) wires the toggle so clicking or pressing `1`/`2`/`3`… swaps variants **in realtime in the browser** — no rebuild, no manual swap.
 
 The toggle never reaches production: it is gated by `NODE_ENV` or a `?variants=1` query param, and production builds short-circuit to render only the original.
+
+## Modes
+
+This skill has three modes. Infer the mode from the user's arguments:
+
+| Mode | Trigger | What it does |
+|---|---|---|
+| **generate** (default) | Any free-form request like "give me 3 variants of the hero" | Full generate workflow below (Inputs → Workflow → Handoff). This is how the skill is normally invoked for the first time on a section. |
+| **promote** | Args start with `promote <section> [variant]` (or natural-language equivalents like "ship variant B", "finalize the bento layout") | Replace the original with the chosen variant, delete losing variants, tear down the switcher scaffolding for that section. See [Promote workflow](#promote-workflow). |
+| **reject** | Args start with `reject <section>` (or "tear down variants", "revert the exploration") | Delete all variant scaffolding for the section; the original section file is byte-identical so nothing to restore there. See [Reject workflow](#reject-workflow). |
+
+Both **promote** and **reject** are destructive. Always discover → plan → **ask the user to confirm** → then edit. Never skip the confirmation step.
 
 ## Inputs to gather
 
@@ -137,19 +149,132 @@ If you have access to Chrome DevTools MCP tools, use them to take screenshots of
 
 Tell the user:
 
-- **To promote a variant**: replace the original's contents with the chosen variant's contents, then delete the switcher wrapper and the unused variant files.
-- **To remove entirely**: revert the switcher wrapper and delete `*Variant*` files. The original is untouched, so the page returns to its exact prior state.
-- **To add more variants later**: re-invoke this skill on the same section; it will add `VariantD` (and so on) alongside the existing ones.
+- **To promote a variant**: run `/ui-variants promote <section> <variant>` — the skill replaces the original with the chosen variant, cleans up losing variants and switcher scaffolding, and shows a per-file plan before editing. See [Promote workflow](#promote-workflow).
+- **To remove entirely**: run `/ui-variants reject <section>` — restores pre-skill state. The original section file was never modified, so it's already correct. See [Reject workflow](#reject-workflow).
+- **To add more variants later**: re-invoke this skill on the same section; it will append `VariantD` (and so on) alongside the existing ones.
+- **Keyboard shortcuts for review**: `1..N` applies option N to the section currently in the viewport (1 = Original, 2 = first variant, 3 = second, …). `V` hides/shows all chips for screenshotting. Selections round-trip via `?<section-id>=<key>` so URLs are shareable.
 
 ## Framework matrix
 
 | Framework | Variant files | Switcher | State |
 |---|---|---|---|
-| React / Next.js | Sibling `.tsx` files | `<VariantSwitcher>` with `useState` + `useEffect` | `localStorage` |
-| Vue 3 | Sibling `.vue` files | `<VariantSwitcher>` using `ref` + `watchEffect` | `localStorage` |
-| Svelte / SvelteKit | Sibling `.svelte` files | `{#if}` block in wrapper | `$state` rune + `localStorage` |
-| Vanilla HTML/CSS/JS | `<template>` tags or HTML partials | `<script>` swapping `innerHTML` | `localStorage` |
-| Astro | Client island (`client:load`) around section | React/Vue/Svelte island | `localStorage` |
+| React / Next.js | Sibling `.tsx` files | `<VariantSwitcher>` with `useState` + `useEffect` | `localStorage` + URL |
+| Vue 3 | Sibling `.vue` files | `<VariantSwitcher>` using `ref` + `watchEffect` | `localStorage` + URL |
+| Svelte / SvelteKit | Sibling `.svelte` files | `{#if}` block in wrapper | `$state` rune + `localStorage` + URL |
+| Vanilla HTML/CSS/JS | `<template>` tags or HTML partials | `<script>` swapping `innerHTML` | `localStorage` + URL |
+| Astro | Client island (`client:load`) around section | React/Vue/Svelte island | `localStorage` + URL |
+
+## Promote workflow
+
+Invoked as `/ui-variants promote <section> [variant]`, or via natural-language equivalents ("ship variant B", "finalize the bento layout for features"). The user has picked a winner; finalize it by replacing the original with the variant's contents, deleting losing variants, and tearing down the switcher scaffolding **for that section only**.
+
+### Step P1 — Parse the command
+
+- `<section>` — match against `data-uiv-section` (Vanilla) or the `sectionId` prop (framework). Slug the user's input if needed.
+- `<variant>` — accept either (a) the variant key (`a`, `b`, `c`, …) or (b) the direction name slugified (e.g., `bento-dispatch` matches `data-uiv-names: {"a":"Bento Dispatch"}`). Case-insensitive.
+- If `<variant>` is missing or ambiguous, list the candidates and ask with `AskUserQuestion`. Don't guess.
+
+### Step P2 — Discovery (read-only, before any edit)
+
+Read, in this order:
+
+1. The HTML or component file holding the target section — note markup, the `data-uiv-section` / `data-uiv-names` attrs, and any inline `<script>` tags that exist only because of specific variants (e.g., a live clock driving a variant-only element).
+2. **Vanilla**: each `<template data-uiv-for="<section>" ...>` sibling — one is the winner, the rest are losers. **Framework**: each variant component file (`*VariantA.tsx`, …) and the switcher wrapper at the call site.
+3. The CSS file with variant-scoped blocks (`ui-variants.css` or equivalent):
+   - Blocks scoped to the winner: `.<section>[data-variant="<winner-key>"] ...`
+   - Blocks scoped to losers.
+   - Shared chip styles (`.uiv-chip*`) — always preserved.
+   - Font `@import` URLs at the top — for each font, grep the file to see which scoped blocks use it. A font used only by losers is orphaned and removable; one also used by the winner or elsewhere is kept.
+4. The switcher source + any `<script src="...">` / `<link rel="stylesheet" href="...">` tags — note whether **any other section** still has `data-uiv-section` or still registers with the switcher. Use `grep -r 'data-uiv-section'` across the codebase to be sure.
+
+### Step P3 — Plan (print before editing)
+
+Output a concrete per-file plan. Example:
+
+```
+Promoting `features` → Bento Dispatch (key: a).
+
+HTML (demo.html):
+  - Replace .features inner markup with Variant A template contents.
+  - Remove data-uiv-section / data-uiv-names attrs from .features.
+  - Remove <template data-uiv-for="features" data-uiv-variant="b">.
+  - Remove inline <script> for [data-fvb-clock] (used only by variant B).
+
+CSS (ui-variants.css):
+  - Rewrite 10 selectors: `.features[data-variant="a"] .fva__*` → `.features .fva__*`.
+  - Delete .features[data-variant="b"] .fvb__* block (~180 lines).
+  - Keep Google Fonts @import for Fraunces + JetBrains Mono (winner uses them).
+  - Remove Unbounded + IBM Plex Mono from @import (only variant B used them).
+
+JS (ui-variants.js):
+  - Unchanged. Other sections (hero, testimonial) still use the switcher.
+
+Other script/link tags:
+  - Unchanged (other sections still need `ui-variants.js` + `ui-variants.css`).
+```
+
+### Step P4 — Confirm
+
+**Always stop and ask the user to confirm before editing.** If they say no, abort. If they push back on a specific line (e.g., "keep variant B's CSS, I'm using it elsewhere"), incorporate and re-print the plan. Don't proceed until you have an explicit yes.
+
+### Step P5 — Execute
+
+After explicit confirmation:
+
+- Apply HTML edits via `Edit`. Replace the section's inner markup wholesale. Preserve surrounding whitespace/indentation.
+- Apply CSS edits:
+  - **Selector rewrite rule**: drop the `[data-variant="<winner-key>"]` attribute selector. Keep everything else in the selector intact.
+    - `.features[data-variant="a"] .fva__tile { ... }` → `.features .fva__tile { ... }`
+    - `.features[data-variant="a"] .fva__tile:hover` → `.features .fva__tile:hover`
+    - `.features[data-variant="a"] { padding: 96px 40px; }` (standalone) → `.features { padding: 96px 40px; }`
+  - Delete loser blocks entirely.
+  - Remove orphaned `@import` URLs from the top of the file.
+- For framework: replace the `<VariantSwitcher ...>` at the call site with a plain mount of the winner component; delete losing variant files. Optionally rename the winning file to the original's name — **confirm with user before renaming**, some teams want to keep the "Variant" suffix as a changelog marker.
+- Tear down the switcher infra **only if** no other section still uses it. If `grep -r 'data-uiv-section'` returns zero hits after your HTML edits, then:
+  - Remove the `<script src="ui-variants.js">` and `<link rel="stylesheet" href="ui-variants.css">`.
+  - Delete `ui-variants.js`, `ui-variants.css`, `variant-switcher-shared.ts`, `VariantSwitcher.*`.
+
+### Step P6 — Post-execution report
+
+Summarize:
+
+- Files changed + approximate line delta per file.
+- Chips still active elsewhere on the page, if any.
+- Conservative choices you made (e.g., "kept font Unbounded because it's also referenced in `styles.css` line 47").
+- Suggest the user reload the page to confirm the promoted section renders cleanly without the chip.
+
+## Reject workflow
+
+Invoked as `/ui-variants reject <section>`, or via natural-language equivalents ("tear down variants on features", "revert the variant exploration"). The user is abandoning this exploration; restore byte-identical pre-skill state.
+
+### Step R1 — Parse and warn
+
+If the user didn't name a section, list sections currently under variant exploration (grep for `data-uiv-section`) and ask which one. Before executing, remind them the variant work is about to be deleted — ask for confirmation unless they already said "force" / "no prompt" / similar.
+
+### Step R2 — Discovery
+
+Same reads as Promote Step P2. You need to identify everything that was added **for this section**.
+
+### Step R3 — Plan + confirm
+
+Print a per-file deletion plan. The **section itself is preserved** — the skill never modified the original, so nothing to restore there.
+
+### Step R4 — Execute
+
+After confirmation:
+
+- Delete all `<template data-uiv-for="<section>" ...>` blocks (Vanilla).
+- Delete all variant component files for the section (framework): `<Section>VariantA.tsx`, `<Section>VariantB.tsx`, etc. Use the naming pattern established in Step 3 of the generate workflow.
+- Delete `.<section>[data-variant="..."] ...` CSS blocks (all of them — no winner).
+- Delete `data-uiv-section` and `data-uiv-names` attrs from the section element.
+- Delete inline `<script>` tags added only for variant-specific features.
+- Delete font `@import`s used only by the deleted blocks.
+- Revert the switcher wrapper at the component call site (framework).
+- If no other sections use the switcher anywhere in the codebase (grep to verify), tear down the shared infra: delete `ui-variants.js`, `ui-variants.css`, `variant-switcher-shared.ts`, `VariantSwitcher.*`, and remove their `<script>` / `<link>` tags.
+
+### Step R5 — Post-execution
+
+Confirm the original section file was not touched. Report files deleted and any shared resources kept (with their reasons). Suggest a page reload.
 
 ## Rules
 
@@ -160,3 +285,6 @@ Tell the user:
 - **Design bar is non-negotiable.** Every variant must clear (a) the Boldness Quota in `references/signature-moves.md` AND (b) the anti-AI-slop + pre-ship checklists in `references/design-principles.md`. Variants that look like generic AI output (pure black/white, untinted grays, symmetric glow shadows, purple-pink gradients, centered paragraphs) are failures. Variants that are polished-but-safe (technically correct, zero signature moves, convergent defaults) are ALSO failures. The skill exists to produce award-quality design exploration, not more safe variants.
 - **Accessibility is non-negotiable.** WCAG contrast, visible focus rings, semantic HTML, `prefers-reduced-motion` — apply on every variant.
 - **Prefer the references.** Don't reinvent the toggle — pull from `references/toggle-ui.md` verbatim and adjust only the integration glue.
+- **Diff-and-confirm before destructive ops.** The `promote` and `reject` sub-commands delete files and rewrite CSS — they are irreversible without git. Always run discovery → print the per-file plan → wait for explicit user confirmation → then edit. Never skip the confirmation step to "move faster."
+- **When in doubt, keep.** For orphan detection during promote/reject (fonts, CSS rules, shared scripts) — if there's any ambiguity about whether a resource is still used, keep it and note the conservative choice in the post-execution report. It's cheap for the user to clean up later; it's expensive to recover a deleted file from before the promote.
+- **Watch for user edits to the generated variants.** Between generate and promote, the user may have tweaked a variant's CSS or markup by hand. During promote discovery, if you see a variant that diverges from what the skill would have generated, preserve those tweaks in the promotion and flag them in the plan so the user knows their edits are being kept.
