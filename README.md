@@ -1,8 +1,8 @@
-# ui-variants
+# ui-buddy
 
 A skill that takes **any section of a website** and, in one shot, generates **a set of alternate UI designs** for it (typically 2–4), injects a **dev-only floating toggle**, and wires it up so you can cycle `Original → Variant A → Variant B → …` **live in the browser** — no rebuild, no manual swap.
 
-Built to help you A/B/C-compare real designs side-by-side before committing to one, and then automatically finalize the winner with a single `/ui-variants promote` invocation.
+Built to help you A/B/C-compare real designs side-by-side before committing to one, and then automatically finalize the winner with a single `/ui-buddy promote` invocation.
 
 ![chip](./hero-b.png)
 
@@ -14,19 +14,19 @@ Using the [`skills` CLI](https://www.npmjs.com/package/skills):
 
 ```bash
 # Global (available in every project)
-npx skills add chinchang/ui-variants -g
+npx skills add chinchang/ui-buddy -g
 
 # Or just this project
-npx skills add chinchang/ui-variants
+npx skills add chinchang/ui-buddy
 ```
 
 To install from a local clone:
 
 ```bash
-npx skills add ./path/to/ui-variants -g
+npx skills add ./path/to/ui-buddy -g
 ```
 
-The `skills` CLI installs into the agent-specific skills directory (for example `~/.claude/skills/ui-variants/`, `~/.cursor/skills/ui-variants/`, etc., or the project-scoped equivalent). Use `-a <agent>` to target a specific agent and `-g` for global scope.
+The `skills` CLI installs into the agent-specific skills directory (for example `~/.claude/skills/ui-buddy/`, `~/.cursor/skills/ui-buddy/`, etc., or the project-scoped equivalent). Use `-a <agent>` to target a specific agent and `-g` for global scope.
 
 ---
 
@@ -37,8 +37,8 @@ The skill has three modes. Invoke by name or slash command (syntax varies by age
 ### Generate (default)
 
 ```
-/ui-variants try 3 versions of the hero section
-/ui-variants 2 variants for the features grid
+/ui-buddy try 3 versions of the hero section
+/ui-buddy 2 variants for the features grid
 ```
 
 Or in plain language:
@@ -51,7 +51,7 @@ The skill will:
 
 1. **Resolve the target** — accepts a file path + selector, a natural-language description, or a screenshot + rough pointer.
 2. **Ask about scope** — visual-only (safer) or allow-restructure (richer exploration).
-3. **Pick distinct aesthetic directions** using a built-in design-principles reference (see `skills/ui-variants/references/design-principles.md`), varying on both aesthetic axes (editorial / depth-forward / unexpected) AND polish axes (typographic restraint / layered depth / color commitment).
+3. **Pick distinct aesthetic directions** using a built-in design-principles reference (see `skills/ui-buddy/references/design-principles.md`), varying on both aesthetic axes (editorial / depth-forward / unexpected) AND polish axes (typographic restraint / layered depth / color commitment).
 4. **Generate variant implementations** as sibling files alongside the original — preserving content, links, handlers, and interactive behavior by default.
 5. **Inject a dev-only `VariantSwitcher`** around the section's render site. Gated on `NODE_ENV !== 'production'` or `?variants=1`. Production builds short-circuit to the original with zero runtime cost.
 6. **Render a floating toggle chip** (bottom-center by default) showing each variant with its direction name and a numeric shortcut prefix — e.g., `[1] Original · [2] Bento Dispatch · [3] Neon Dossier`. Clicking or pressing the number swaps the section in realtime.
@@ -62,16 +62,16 @@ The skill will:
 Once you've picked a winner:
 
 ```
-/ui-variants promote features bento-dispatch
-/ui-variants promote hero a
+/ui-buddy promote features bento-dispatch
+/ui-buddy promote hero a
 ```
 
-The skill replaces the original's markup with the chosen variant, deletes losing variants + their scoped CSS + orphaned font imports, strips `data-uiv-section` attrs, and tears down the shared switcher infra when no other section still needs it. It **always prints a per-file plan and waits for your confirmation** before touching anything.
+The skill replaces the original's markup with the chosen variant, deletes losing variants + their scoped CSS + orphaned font imports, strips `data-uib-section` attrs, and tears down the shared switcher infra when no other section still needs it. It **always prints a per-file plan and waits for your confirmation** before touching anything.
 
 ### Reject
 
 ```
-/ui-variants reject features
+/ui-buddy reject features
 ```
 
 Deletes all variant scaffolding for a section and restores pre-skill state. The original section file was never modified, so nothing to restore there.
@@ -98,7 +98,7 @@ The skill is opinionated about producing **award-site-level work** — the kind 
 
 ### Layer 1 — Boldness Quota (the "crazy" requirement)
 
-Every variant MUST include **≥3 signature moves** drawn from different categories (composition, typography, motion, texture, interaction). See `skills/ui-variants/references/signature-moves.md` for the full catalog. Examples:
+Every variant MUST include **≥3 signature moves** drawn from different categories (composition, typography, motion, texture, interaction). See `skills/ui-buddy/references/signature-moves.md` for the full catalog. Examples:
 
 - Extreme scale contrast (240px headline next to 11px tabular labels)
 - Breaking the grid — diagonal composition, radical asymmetry, content rotated
@@ -151,7 +151,7 @@ Accessibility is non-negotiable: WCAG 4.5:1 body / 3:1 large text, visible focus
 | Vanilla HTML/CSS/JS | `<template>` tags | `<script>` swapping `innerHTML` | `localStorage` + URL |
 | Astro | Client island | React/Vue/Svelte island | `localStorage` + URL |
 
-All framework implementations share a tiny `variant-switcher-shared.ts` coordinator module that owns the `IntersectionObserver` (scrollspy), global number-key handler, URL read/write helpers, and the dev gate. Drop-in templates live in `skills/ui-variants/references/toggle-ui.md`.
+All framework implementations share a tiny `variant-switcher-shared.ts` coordinator module that owns the `IntersectionObserver` (scrollspy), global number-key handler, URL read/write helpers, and the dev gate. Drop-in templates live in `skills/ui-buddy/references/toggle-ui.md`.
 
 ---
 
@@ -163,7 +163,7 @@ All framework implementations share a tiny `variant-switcher-shared.ts` coordina
 ├── PLAN.md                               # roadmap / what shipped across sessions
 ├── LICENSE
 ├── skills/
-│   └── ui-variants/
+│   └── ui-buddy/
 │       ├── SKILL.md                      # the skill entrypoint (generate / promote / reject)
 │       └── references/
 │           ├── design-principles.md      # polish + accessibility baseline
@@ -172,8 +172,8 @@ All framework implementations share a tiny `variant-switcher-shared.ts` coordina
 │           └── variant-playbook.md       # aesthetic archetypes + role-specific starts
 ├── demo.html                             # demo site (vanilla HTML) you can try the skill on
 ├── styles.css
-├── ui-variants.css                       # the switcher's CSS + generated variant styles
-├── ui-variants.js                        # the vanilla-HTML switcher script
+├── ui-buddy.css                       # the switcher's CSS + generated variant styles
+├── ui-buddy.js                        # the vanilla-HTML switcher script
 └── *.png                                 # reference screenshots of generated variants
 ```
 

@@ -6,7 +6,7 @@
     location.search.includes('variants=1');
   if (!gate) return;
 
-  const sections = document.querySelectorAll('[data-uiv-section]');
+  const sections = document.querySelectorAll('[data-uib-section]');
   if (!sections.length) return;
 
   // URL helpers. Each section's selection is stored as ?<section-id>=<key>.
@@ -28,14 +28,14 @@
     let names = {};
     try { names = JSON.parse(section.dataset.uivNames || '{}'); } catch {}
 
-    const storageKey = `ui-variant:${id}`;
-    const dismissKey = `ui-variant-dismissed:${id}`;
+    const storageKey = `ui-buddy:${id}`;
+    const dismissKey = `ui-buddy-dismissed:${id}`;
 
     const originalHTML = section.innerHTML;
     const variants = { original: { html: originalHTML, variant: null } };
     const order = ['original'];
 
-    document.querySelectorAll(`template[data-uiv-for="${id}"]`).forEach(t => {
+    document.querySelectorAll(`template[data-uib-for="${id}"]`).forEach(t => {
       const key = t.dataset.uivVariant;
       variants[key] = { html: t.innerHTML, variant: key };
       if (!order.includes(key)) order.push(key);
@@ -51,15 +51,15 @@
       }
       try { localStorage.setItem(storageKey, key); } catch {}
       writeToURL(id, key);
-      chip.querySelectorAll('[data-uiv-seg]').forEach(el => {
+      chip.querySelectorAll('[data-uib-seg]').forEach(el => {
         el.setAttribute('aria-checked', el.dataset.uivSeg === key ? 'true' : 'false');
       });
       ctx.currentKey = key;
     };
 
     const chip = document.createElement('div');
-    chip.className = 'uiv-chip';
-    chip.dataset.uivChipFor = id;
+    chip.className = 'uib-chip';
+    chip.dataset.uibChipFor = id;
     chip.setAttribute('role', 'radiogroup');
     chip.setAttribute('aria-label', `${id} variant switcher`);
     chip.style.bottom = `${16 + stackIndex * 48}px`;
@@ -68,34 +68,34 @@
       const name = key === 'original' ? 'Original' : (names[key] || key.toUpperCase());
       const num = index + 1;
       const title = `${name} (press ${num})`;
-      return `<button class="uiv-chip__seg" data-uiv-seg="${key}" role="radio" title="${title}">` +
-             `<span class="uiv-chip__num">${num}</span>` +
-             `<span class="uiv-chip__name">${name}</span>` +
+      return `<button class="uib-chip__seg" data-uib-seg="${key}" role="radio" title="${title}">` +
+             `<span class="uib-chip__num">${num}</span>` +
+             `<span class="uib-chip__name">${name}</span>` +
              `</button>`;
     };
     chip.innerHTML = `
-      <span class="uiv-chip__label">${id}</span>
+      <span class="uib-chip__label">${id}</span>
       ${order.map(segButton).join('')}
-      <span class="uiv-chip__badge">PREVIEW</span>
-      <button class="uiv-chip__close" aria-label="Hide">×</button>
+      <span class="uib-chip__badge">PREVIEW</span>
+      <button class="uib-chip__close" aria-label="Hide">×</button>
     `;
 
     const scrollToSection = () => {
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
       section.scrollIntoView({ behavior, block: 'start' });
     };
-    chip.querySelectorAll('[data-uiv-seg]').forEach(el => {
+    chip.querySelectorAll('[data-uib-seg]').forEach(el => {
       el.addEventListener('click', () => apply(el.dataset.uivSeg));
       el.addEventListener('mouseenter', scrollToSection);
       el.addEventListener('focus', scrollToSection);
     });
-    chip.querySelector('.uiv-chip__close').addEventListener('click', () => {
+    chip.querySelector('.uib-chip__close').addEventListener('click', () => {
       chip.remove();
       try { sessionStorage.setItem(dismissKey, '1'); } catch {}
     });
 
     chip.addEventListener('keydown', e => {
-      const current = [...chip.querySelectorAll('[data-uiv-seg]')]
+      const current = [...chip.querySelectorAll('[data-uib-seg]')]
         .find(el => el.getAttribute('aria-checked') === 'true');
       const idx = order.indexOf(current ? current.dataset.uivSeg : 'original');
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -129,8 +129,8 @@
     const setActive = id => {
       if (id === activeId) return;
       activeId = id;
-      document.querySelectorAll('.uiv-chip').forEach(c => {
-        c.classList.toggle('uiv-chip--active', c.dataset.uivChipFor === id);
+      document.querySelectorAll('.uib-chip').forEach(c => {
+        c.classList.toggle('uib-chip--active', c.dataset.uibChipFor === id);
       });
     };
     const observer = new IntersectionObserver(entries => {
@@ -153,7 +153,7 @@
 
     // V: toggle chip visibility for screenshots.
     if (e.key.toLowerCase() === 'v') {
-      document.querySelectorAll('.uiv-chip').forEach(c => {
+      document.querySelectorAll('.uib-chip').forEach(c => {
         c.style.display = c.style.display === 'none' ? '' : 'none';
       });
       return;

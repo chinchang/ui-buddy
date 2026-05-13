@@ -4,10 +4,10 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
 
 ## Conventions (apply to all frameworks)
 
-- **localStorage key**: `ui-variant:<section-id>` where `<section-id>` is a stable slug the skill picks (e.g., `hero`, `pricing`, `features`).
+- **localStorage key**: `ui-buddy:<section-id>` where `<section-id>` is a stable slug the skill picks (e.g., `hero`, `pricing`, `features`).
 - **URL query param**: `?<section-id>=<key>` — same values as localStorage. **Takes precedence** over localStorage on boot, so reload-ready URLs like `example.com?hero=b&features=a&variants=1` reproduce a teammate's exact selection. Written via `history.replaceState` on every selection (no history pollution). `original` is never written to the URL (missing key = original).
 - **Values**: `"original" | "a" | "b" | "c" | ...` — variants are opaque stable slugs. Default `"original"`. The number of variants is **variable** (2, 3, or more). Render only the segments whose templates/components actually exist.
-- **sessionStorage key** (chip dismiss): `ui-variant-dismissed:<section-id>` → `"1"` when dismissed.
+- **sessionStorage key** (chip dismiss): `ui-buddy-dismissed:<section-id>` → `"1"` when dismissed.
 - **Dev-only gate**: switcher renders the chip + selector only when the gate passes; otherwise renders the original directly.
 - **Stacking**: when multiple switchers live on one page, each chip reads its own position index and offsets by `16 + index * 48` px along its fixed axis (top or bottom).
 - **Chip segment label**: `<number> <display-name>` — e.g., `1 Original`, `2 Bento Dispatch`, `3 Neon Dossier`. The number (1..N, where 1 is Original) doubles as the keyboard shortcut. The display name comes from the `names` map passed in by the skill.
@@ -15,14 +15,14 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
   - `1..9` — apply the Nth option to the section currently in the viewport (scrollspy-active). `1` = Original, `2` = first variant, `3` = second, etc.
   - `V` — toggle all chips' visibility (for clean screenshots).
   - Inside a focused chip: `Arrow` keys cycle segments, `Enter` selects, `×` dismisses.
-- **Scrollspy**: an `IntersectionObserver` tracks which `[data-uiv-section]` is most visible; that chip gets `.uiv-chip--active`. Clarifies which chip the number-key shortcuts will target.
+- **Scrollspy**: an `IntersectionObserver` tracks which `[data-uib-section]` is most visible; that chip gets `.uib-chip--active`. Clarifies which chip the number-key shortcuts will target.
 - **Hover-to-scroll**: hovering (or tab-focusing) a chip segment `scrollIntoView`s the corresponding section, honoring `prefers-reduced-motion`.
 
 ## Shared CSS (framework-agnostic)
 
 ```css
-/* ui-variants-chip.css — import once per page, or inline */
-.uiv-chip {
+/* ui-buddy-chip.css — import once per page, or inline */
+.uib-chip {
   position: fixed;
   left: 50%;
   bottom: 16px; /* or: top: 16px; right: 16px; — pick one convention per project */
@@ -46,21 +46,21 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
   transition: opacity 160ms ease, background 160ms ease,
               border-color 160ms ease, box-shadow 160ms ease;
 }
-.uiv-chip:hover { opacity: 1; }
+.uib-chip:hover { opacity: 1; }
 /* Scrollspy: the chip whose section is most visible. */
-.uiv-chip--active {
+.uib-chip--active {
   opacity: 1;
   background: rgba(17, 17, 17, 0.92);
   border-color: rgba(255, 255, 255, 0.22);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
-.uiv-chip__label {
+.uib-chip__label {
   padding: 0 8px 0 10px;
   opacity: 0.55;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.uiv-chip__seg {
+.uib-chip__seg {
   appearance: none;
   background: transparent;
   border: 0;
@@ -77,14 +77,14 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
   white-space: nowrap;
   transition: background 120ms ease, color 120ms ease;
 }
-.uiv-chip__seg:hover { background: rgba(255, 255, 255, 0.08); }
-.uiv-chip__seg[aria-checked="true"] {
+.uib-chip__seg:hover { background: rgba(255, 255, 255, 0.08); }
+.uib-chip__seg[aria-checked="true"] {
   background: #fff;
   color: #111;
   font-weight: 600;
 }
 /* Numeric prefix inside each segment — doubles as the keyboard shortcut. */
-.uiv-chip__num {
+.uib-chip__num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -97,12 +97,12 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
   font-weight: 600;
   opacity: 0.85;
 }
-.uiv-chip__seg[aria-checked="true"] .uiv-chip__num {
+.uib-chip__seg[aria-checked="true"] .uib-chip__num {
   background: rgba(17, 17, 17, 0.12);
   color: #111;
   opacity: 1;
 }
-.uiv-chip__badge {
+.uib-chip__badge {
   margin: 0 4px 0 6px;
   padding: 2px 6px;
   font-size: 9px;
@@ -110,7 +110,7 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
   background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }
-.uiv-chip__close {
+.uib-chip__close {
   appearance: none;
   background: transparent;
   border: 0;
@@ -122,10 +122,10 @@ Drop-in switcher + toggle chip implementations for each supported framework. Cop
   font-size: 14px;
   line-height: 1;
 }
-.uiv-chip__close:hover { opacity: 1; }
+.uib-chip__close:hover { opacity: 1; }
 
 /* Hover-to-scroll offset so the sticky nav (if any) doesn't overlap the section top. */
-[data-uiv-section] { scroll-margin-top: 80px; }
+[data-uib-section] { scroll-margin-top: 80px; }
 ```
 
 ---
@@ -142,11 +142,11 @@ type Apply = (key: string) => void;
 type SetActive = (isActive: boolean) => void;
 
 export type SwitcherEntry = {
-  id: string;            // stable section slug, matches data-uiv-section
+  id: string;            // stable section slug, matches data-uib-section
   order: string[];       // e.g. ['original', 'a', 'b'] — index 0 is Original
   apply: Apply;          // the switcher's setState/variant setter
   element: Element;      // the section DOM node (for IntersectionObserver)
-  setActive: SetActive;  // toggle .uiv-chip--active on this instance's chip
+  setActive: SetActive;  // toggle .uib-chip--active on this instance's chip
 };
 
 const registry = new Map<string, SwitcherEntry>();
@@ -215,7 +215,7 @@ function init() {
 
     // V — toggle chip visibility for screenshots.
     if (e.key.toLowerCase() === 'v') {
-      document.querySelectorAll<HTMLElement>('.uiv-chip').forEach(c => {
+      document.querySelectorAll<HTMLElement>('.uib-chip').forEach(c => {
         c.style.display = c.style.display === 'none' ? '' : 'none';
       });
       return;
@@ -265,7 +265,7 @@ Every implementation below — React, Vue, Svelte, Vanilla — supports the full
 
 The framework switchers all accept the same prop shape:
 
-- `sectionId` (string) — stable slug, matches `data-uiv-section`.
+- `sectionId` (string) — stable slug, matches `data-uib-section`.
 - `variants` (array of `{ key: string; name: string; content: <renderable> }`) — ordered. Order defines the `2`, `3`, `4`… number-key bindings.
 - `original` (renderable) — always shortcut `1`.
 - `stackIndex` (number, default `0`) — position in the bottom-stacked chip column.
@@ -301,8 +301,8 @@ export function VariantSwitcher(p: Props) {
   const [active, setActiveLocal] = useState(false);
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
-  const storageKey = `ui-variant:${p.sectionId}`;
-  const dismissKey = `ui-variant-dismissed:${p.sectionId}`;
+  const storageKey = `ui-buddy:${p.sectionId}`;
+  const dismissKey = `ui-buddy-dismissed:${p.sectionId}`;
 
   const order = useMemo(
     () => ['original', ...p.variants.map(v => v.key)],
@@ -354,7 +354,7 @@ export function VariantSwitcher(p: Props) {
   }, [variant, p.original, p.variants]);
 
   if (!devGateOn() || !mounted) {
-    return <div data-uiv-section={p.sectionId}>{p.original}</div>;
+    return <div data-uib-section={p.sectionId}>{p.original}</div>;
   }
 
   const bottom = 16 + (p.stackIndex ?? 0) * 48;
@@ -363,15 +363,15 @@ export function VariantSwitcher(p: Props) {
     <>
       <div
         ref={sectionRef}
-        data-uiv-section={p.sectionId}
+        data-uib-section={p.sectionId}
         data-variant={variant === 'original' ? undefined : variant}
       >
         {body}
       </div>
       {!dismissed && (
         <div
-          className={`uiv-chip${active ? ' uiv-chip--active' : ''}`}
-          data-uiv-chip-for={p.sectionId}
+          className={`uib-chip${active ? ' uib-chip--active' : ''}`}
+          data-uib-chip-for={p.sectionId}
           style={{ bottom }}
           role="radiogroup"
           aria-label={`${p.sectionId} variant switcher`}
@@ -386,11 +386,11 @@ export function VariantSwitcher(p: Props) {
             }
           }}
         >
-          <span className="uiv-chip__label">{p.sectionId}</span>
+          <span className="uib-chip__label">{p.sectionId}</span>
           {segs.map((s, i) => (
             <button
               key={s.key}
-              className="uiv-chip__seg"
+              className="uib-chip__seg"
               role="radio"
               aria-checked={variant === s.key}
               title={`${s.name} (press ${i + 1})`}
@@ -398,13 +398,13 @@ export function VariantSwitcher(p: Props) {
               onMouseEnter={() => sectionRef.current && scrollToSection(sectionRef.current)}
               onFocus={() => sectionRef.current && scrollToSection(sectionRef.current)}
             >
-              <span className="uiv-chip__num">{i + 1}</span>
-              <span className="uiv-chip__name">{s.name}</span>
+              <span className="uib-chip__num">{i + 1}</span>
+              <span className="uib-chip__name">{s.name}</span>
             </button>
           ))}
-          <span className="uiv-chip__badge">PREVIEW</span>
+          <span className="uib-chip__badge">PREVIEW</span>
           <button
-            className="uiv-chip__close"
+            className="uib-chip__close"
             aria-label="Hide variant switcher for this session"
             onClick={() => {
               setDismissed(true);
@@ -470,8 +470,8 @@ const mounted = ref(false);
 const active = ref(false);
 const sectionEl = useTemplateRef<HTMLDivElement>('sectionEl');
 
-const storageKey = `ui-variant:${props.sectionId}`;
-const dismissKey = `ui-variant-dismissed:${props.sectionId}`;
+const storageKey = `ui-buddy:${props.sectionId}`;
+const dismissKey = `ui-buddy-dismissed:${props.sectionId}`;
 
 const order = computed(() => ['original', ...props.variants.map(v => v.key)]);
 const segs = computed(() => [
@@ -528,7 +528,7 @@ const onChipKeydown = (e: KeyboardEvent) => {
 <template>
   <div
     ref="sectionEl"
-    :data-uiv-section="sectionId"
+    :data-uib-section="sectionId"
     :data-variant="variant === 'original' ? undefined : variant"
   >
     <template v-if="!enabled || variant === 'original'">
@@ -540,19 +540,19 @@ const onChipKeydown = (e: KeyboardEvent) => {
   </div>
   <div
     v-if="enabled && !dismissed"
-    class="uiv-chip"
-    :class="{ 'uiv-chip--active': active }"
-    :data-uiv-chip-for="sectionId"
+    class="uib-chip"
+    :class="{ 'uib-chip--active': active }"
+    :data-uib-chip-for="sectionId"
     :style="{ bottom: bottom + 'px' }"
     role="radiogroup"
     :aria-label="`${sectionId} variant switcher`"
     @keydown="onChipKeydown"
   >
-    <span class="uiv-chip__label">{{ sectionId }}</span>
+    <span class="uib-chip__label">{{ sectionId }}</span>
     <button
       v-for="(s, i) in segs"
       :key="s.key"
-      class="uiv-chip__seg"
+      class="uib-chip__seg"
       role="radio"
       :aria-checked="variant === s.key"
       :title="`${s.name} (press ${i + 1})`"
@@ -560,11 +560,11 @@ const onChipKeydown = (e: KeyboardEvent) => {
       @mouseenter="sectionEl && scrollToSection(sectionEl)"
       @focus="sectionEl && scrollToSection(sectionEl)"
     >
-      <span class="uiv-chip__num">{{ i + 1 }}</span>
-      <span class="uiv-chip__name">{{ s.name }}</span>
+      <span class="uib-chip__num">{{ i + 1 }}</span>
+      <span class="uib-chip__name">{{ s.name }}</span>
     </button>
-    <span class="uiv-chip__badge">PREVIEW</span>
-    <button class="uiv-chip__close" aria-label="Hide variant switcher for this session" @click="dismiss">×</button>
+    <span class="uib-chip__badge">PREVIEW</span>
+    <button class="uib-chip__close" aria-label="Hide variant switcher for this session" @click="dismiss">×</button>
   </div>
 </template>
 ```
@@ -617,8 +617,8 @@ Pass 2, 3, or more entries — `variants` order determines the number-key bindin
   let active = $state(false);
   let sectionEl: HTMLDivElement | undefined;
 
-  const storageKey = `ui-variant:${sectionId}`;
-  const dismissKey = `ui-variant-dismissed:${sectionId}`;
+  const storageKey = `ui-buddy:${sectionId}`;
+  const dismissKey = `ui-buddy-dismissed:${sectionId}`;
 
   const order = $derived(['original', ...variants.map(v => v.key)]);
   const segs = $derived([
@@ -673,7 +673,7 @@ Pass 2, 3, or more entries — `variants` order determines the number-key bindin
 
 <div
   bind:this={sectionEl}
-  data-uiv-section={sectionId}
+  data-uib-section={sectionId}
   data-variant={variant === 'original' ? undefined : variant}
 >
   {#if !enabled || variant === 'original'}
@@ -687,18 +687,18 @@ Pass 2, 3, or more entries — `variants` order determines the number-key bindin
 
 {#if enabled && !dismissed}
   <div
-    class="uiv-chip"
-    class:uiv-chip--active={active}
-    data-uiv-chip-for={sectionId}
+    class="uib-chip"
+    class:uib-chip--active={active}
+    data-uib-chip-for={sectionId}
     style="bottom: {16 + stackIndex * 48}px"
     role="radiogroup"
     aria-label="{sectionId} variant switcher"
     onkeydown={onChipKeydown}
   >
-    <span class="uiv-chip__label">{sectionId}</span>
+    <span class="uib-chip__label">{sectionId}</span>
     {#each segs as s, i}
       <button
-        class="uiv-chip__seg"
+        class="uib-chip__seg"
         role="radio"
         aria-checked={variant === s.key}
         title="{s.name} (press {i + 1})"
@@ -706,12 +706,12 @@ Pass 2, 3, or more entries — `variants` order determines the number-key bindin
         onmouseenter={() => sectionEl && scrollToSection(sectionEl)}
         onfocus={() => sectionEl && scrollToSection(sectionEl)}
       >
-        <span class="uiv-chip__num">{i + 1}</span>
-        <span class="uiv-chip__name">{s.name}</span>
+        <span class="uib-chip__num">{i + 1}</span>
+        <span class="uib-chip__name">{s.name}</span>
       </button>
     {/each}
-    <span class="uiv-chip__badge">PREVIEW</span>
-    <button class="uiv-chip__close" aria-label="Hide variant switcher for this session" onclick={dismiss}>×</button>
+    <span class="uib-chip__badge">PREVIEW</span>
+    <button class="uib-chip__close" aria-label="Hide variant switcher for this session" onclick={dismiss}>×</button>
   </div>
 {/if}
 ```
@@ -751,14 +751,14 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
 
 ```html
 <!-- Original section — the number of variants is variable; only render templates that exist. -->
-<section id="hero" data-uiv-section="hero" data-uiv-names='{"a":"Editorial Serif","b":"Brutalist Grid","c":"Neo-Retro Terminal"}'>
+<section id="hero" data-uib-section="hero" data-uib-names='{"a":"Editorial Serif","b":"Brutalist Grid","c":"Neo-Retro Terminal"}'>
   <!-- original markup here -->
 </section>
 
 <!-- Variants (inert until mounted). Add or omit any of a/b/c — the chip sizes to what's present. -->
-<template data-uiv-for="hero" data-uiv-variant="a"><!-- variant A markup --></template>
-<template data-uiv-for="hero" data-uiv-variant="b"><!-- variant B markup --></template>
-<template data-uiv-for="hero" data-uiv-variant="c"><!-- variant C markup --></template>
+<template data-uib-for="hero" data-uib-variant="a"><!-- variant A markup --></template>
+<template data-uib-for="hero" data-uib-variant="b"><!-- variant B markup --></template>
+<template data-uib-for="hero" data-uib-variant="c"><!-- variant C markup --></template>
 
 <script>
 (() => {
@@ -768,7 +768,7 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
     || location.search.includes('variants=1');
   if (!gate) return;
 
-  const sections = document.querySelectorAll('[data-uiv-section]');
+  const sections = document.querySelectorAll('[data-uib-section]');
   if (!sections.length) return;
 
   // URL helpers — each section's selection round-trips via ?<section-id>=<key>.
@@ -789,14 +789,14 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
     let names = {};
     try { names = JSON.parse(section.dataset.uivNames || '{}'); } catch {}
 
-    const storageKey = `ui-variant:${id}`;
-    const dismissKey = `ui-variant-dismissed:${id}`;
+    const storageKey = `ui-buddy:${id}`;
+    const dismissKey = `ui-buddy-dismissed:${id}`;
 
     const originalHTML = section.innerHTML;
     const variants = { original: { html: originalHTML, variant: null } };
     const order = ['original'];
 
-    document.querySelectorAll(`template[data-uiv-for="${id}"]`).forEach(t => {
+    document.querySelectorAll(`template[data-uib-for="${id}"]`).forEach(t => {
       const key = t.dataset.uivVariant;
       variants[key] = { html: t.innerHTML, variant: key };
       if (!order.includes(key)) order.push(key);
@@ -809,15 +809,15 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
       else delete section.dataset.variant;
       try { localStorage.setItem(storageKey, key); } catch {}
       writeToURL(id, key);
-      chip.querySelectorAll('[data-uiv-seg]').forEach(el => {
+      chip.querySelectorAll('[data-uib-seg]').forEach(el => {
         el.setAttribute('aria-checked', el.dataset.uivSeg === key ? 'true' : 'false');
       });
       ctx.currentKey = key;
     };
 
     const chip = document.createElement('div');
-    chip.className = 'uiv-chip';
-    chip.dataset.uivChipFor = id;
+    chip.className = 'uib-chip';
+    chip.dataset.uibChipFor = id;
     chip.setAttribute('role', 'radiogroup');
     chip.setAttribute('aria-label', `${id} variant switcher`);
     chip.style.bottom = `${16 + stackIndex * 48}px`;
@@ -826,16 +826,16 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
     const segButton = (key, index) => {
       const name = key === 'original' ? 'Original' : (names[key] || key.toUpperCase());
       const num = index + 1;
-      return `<button class="uiv-chip__seg" data-uiv-seg="${key}" role="radio" title="${name} (press ${num})">` +
-             `<span class="uiv-chip__num">${num}</span>` +
-             `<span class="uiv-chip__name">${name}</span>` +
+      return `<button class="uib-chip__seg" data-uib-seg="${key}" role="radio" title="${name} (press ${num})">` +
+             `<span class="uib-chip__num">${num}</span>` +
+             `<span class="uib-chip__name">${name}</span>` +
              `</button>`;
     };
     chip.innerHTML = `
-      <span class="uiv-chip__label">${id}</span>
+      <span class="uib-chip__label">${id}</span>
       ${order.map(segButton).join('')}
-      <span class="uiv-chip__badge">PREVIEW</span>
-      <button class="uiv-chip__close" aria-label="Hide">×</button>
+      <span class="uib-chip__badge">PREVIEW</span>
+      <button class="uib-chip__close" aria-label="Hide">×</button>
     `;
 
     // Hover-to-scroll (respects prefers-reduced-motion).
@@ -843,19 +843,19 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
       section.scrollIntoView({ behavior, block: 'start' });
     };
-    chip.querySelectorAll('[data-uiv-seg]').forEach(el => {
+    chip.querySelectorAll('[data-uib-seg]').forEach(el => {
       el.addEventListener('click', () => apply(el.dataset.uivSeg));
       el.addEventListener('mouseenter', scrollToSection);
       el.addEventListener('focus', scrollToSection);
     });
-    chip.querySelector('.uiv-chip__close').addEventListener('click', () => {
+    chip.querySelector('.uib-chip__close').addEventListener('click', () => {
       chip.remove();
       try { sessionStorage.setItem(dismissKey, '1'); } catch {}
     });
 
     // Arrow-key cycle within a focused chip.
     chip.addEventListener('keydown', e => {
-      const current = [...chip.querySelectorAll('[data-uiv-seg]')]
+      const current = [...chip.querySelectorAll('[data-uib-seg]')]
         .find(el => el.getAttribute('aria-checked') === 'true');
       const idx = order.indexOf(current ? current.dataset.uivSeg : 'original');
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -878,14 +878,14 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
     apply(initial);
   });
 
-  // Scrollspy — chip for the most-visible section gets `.uiv-chip--active`.
+  // Scrollspy — chip for the most-visible section gets `.uib-chip--active`.
   if ('IntersectionObserver' in window) {
     const ratios = new Map();
     const setActive = id => {
       if (id === activeId) return;
       activeId = id;
-      document.querySelectorAll('.uiv-chip').forEach(c => {
-        c.classList.toggle('uiv-chip--active', c.dataset.uivChipFor === id);
+      document.querySelectorAll('.uib-chip').forEach(c => {
+        c.classList.toggle('uib-chip--active', c.dataset.uibChipFor === id);
       });
     };
     const observer = new IntersectionObserver(entries => {
@@ -907,7 +907,7 @@ Place variants as inert `<template>` siblings of the section. The script mounts 
 
     // V — toggle chip visibility for screenshots.
     if (e.key.toLowerCase() === 'v') {
-      document.querySelectorAll('.uiv-chip').forEach(c => {
+      document.querySelectorAll('.uib-chip').forEach(c => {
         c.style.display = c.style.display === 'none' ? '' : 'none';
       });
       return;
@@ -966,7 +966,7 @@ If multiple islands coexist on the page (one per section), each registers separa
 
 - [ ] Original component file is unchanged (byte-identical)
 - [ ] Variant files created as siblings (2, 3, or more — whatever the skill produced)
-- [ ] CSS for `.uiv-chip*` imported once per page (includes `.uiv-chip--active` and `.uiv-chip__num`)
+- [ ] CSS for `.uib-chip*` imported once per page (includes `.uib-chip--active` and `.uib-chip__num`)
 - [ ] Switcher wraps the render site, not the component definition
 - [ ] Dev gate verified (production build / no `?variants=1` → toggle hidden)
 - [ ] `sectionId` unique across the page
@@ -974,6 +974,6 @@ If multiple islands coexist on the page (one per section), each registers separa
 - [ ] Active segment has `aria-checked="true"`
 - [ ] Keyboard: arrows cycle inside a focused chip; `1..N` applies option N to the scrollspy-active section; `V` hides; `×` dismisses for session
 - [ ] URL-share round-trips: select variants, reload with the URL, state is preserved; paste URL in new tab, same state shown
-- [ ] Scrollspy: scrolling up/down emphasizes the chip for the section currently in the viewport (`.uiv-chip--active` applied)
+- [ ] Scrollspy: scrolling up/down emphasizes the chip for the section currently in the viewport (`.uib-chip--active` applied)
 - [ ] Hover-to-scroll: hovering a segment smoothly scrolls to the section (respects `prefers-reduced-motion`)
 - [ ] Form submissions / link navigation still work inside each variant

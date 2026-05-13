@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Drift — deep work, quietly</title>
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="ui-variants.css" />
+  <link rel="stylesheet" href="ui-buddy.css" />
 </head>
 <body>
   <header class="nav">
@@ -21,8 +21,8 @@
   <section
     class="hero"
     id="hero"
-    data-uiv-section="hero"
-    data-uiv-names='{"a":"Swiss Broadsheet","b":"Ambient Depth","c":"Midnight Terminal"}'
+    data-uib-section="hero"
+    data-uib-names='{"a":"Swiss Broadsheet","b":"Ambient Depth","c":"Midnight Terminal"}'
   >
     <div class="hero__inner">
       <p class="hero__eyebrow">A focus timer, reimagined</p>
@@ -49,7 +49,7 @@
     </div>
   </section>
 
-  <template data-uiv-for="hero" data-uiv-variant="a">
+  <template data-uib-for="hero" data-uib-variant="a">
     <div class="hva">
       <header class="hva__top">
         <span class="hva__brand">DRIFT</span>
@@ -86,7 +86,7 @@
     </div>
   </template>
 
-  <template data-uiv-for="hero" data-uiv-variant="b">
+  <template data-uib-for="hero" data-uib-variant="b">
     <div class="hvb">
       <div class="hvb__mesh" aria-hidden="true"></div>
       <div class="hvb__grain" aria-hidden="true"></div>
@@ -132,7 +132,7 @@
     </div>
   </template>
 
-  <template data-uiv-for="hero" data-uiv-variant="c">
+  <template data-uib-for="hero" data-uib-variant="c">
     <div class="hvc">
       <div class="hvc__grain" aria-hidden="true"></div>
       <div class="hvc__inner">
@@ -188,8 +188,8 @@
   <section
     class="features"
     id="features"
-    data-uiv-section="features"
-    data-uiv-names='{"a":"Bento Dispatch","b":"Neon Dossier"}'
+    data-uib-section="features"
+    data-uib-names='{"a":"Bento Dispatch","b":"Neon Dossier"}'
   >
     <h2 class="section-title">Small tool, strong opinions.</h2>
     <div class="features__grid">
@@ -212,7 +212,7 @@
     </div>
   </section>
 
-  <template data-uiv-for="features" data-uiv-variant="a">
+  <template data-uib-for="features" data-uib-variant="a">
     <div class="fva">
       <header class="fva__masthead">
         <span class="fva__kicker">&sect; 02 &mdash; Dispatch</span>
@@ -269,7 +269,7 @@
     </div>
   </template>
 
-  <template data-uiv-for="features" data-uiv-variant="b">
+  <template data-uib-for="features" data-uib-variant="b">
     <div class="fvb">
       <div class="fvb__grain" aria-hidden="true"></div>
       <header class="fvb__head">
@@ -355,8 +355,8 @@
   <section
     class="testimonial"
     id="testimonials"
-    data-uiv-section="testimonial"
-    data-uiv-names='{"a":"Pull-Quote Brutalist","b":"Editorial Portrait","c":"Dev Log Terminal"}'
+    data-uib-section="testimonial"
+    data-uib-names='{"a":"Pull-Quote Brutalist","b":"Editorial Portrait","c":"Dev Log Terminal"}'
   >
     <blockquote>
       "I've tried every pomodoro app. This is the first one that feels like a tool
@@ -365,7 +365,7 @@
     <cite>— Noor A., software engineer</cite>
   </section>
 
-  <template data-uiv-for="testimonial" data-uiv-variant="a">
+  <template data-uib-for="testimonial" data-uib-variant="a">
     <figure class="tva">
       <span class="tva__mark" aria-hidden="true">&ldquo;</span>
       <blockquote class="tva__quote">
@@ -382,7 +382,7 @@
     </figure>
   </template>
 
-  <template data-uiv-for="testimonial" data-uiv-variant="b">
+  <template data-uib-for="testimonial" data-uib-variant="b">
     <div class="tvb">
       <aside class="tvb__card">
         <div class="tvb__avatar" aria-hidden="true">N</div>
@@ -400,7 +400,7 @@
     </div>
   </template>
 
-  <template data-uiv-for="testimonial" data-uiv-variant="c">
+  <template data-uib-for="testimonial" data-uib-variant="c">
     <div class="tvc" role="group" aria-label="Testimonial, terminal style">
       <div class="tvc__dots" aria-hidden="true"><span></span><span></span><span></span></div>
       <div class="tvc__body">
@@ -429,7 +429,7 @@
     <p>© 2026 Drift · <a href="#">Privacy</a> · <a href="#">Changelog</a></p>
   </footer>
 
-  <script src="ui-variants.js"></script>
+  <script src="ui-buddy.js"></script>
   <script>
     // Live UTC clock for Variant B. Ticks once a second; updates any mounted element.
     (() => {

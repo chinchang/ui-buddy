@@ -1,9 +1,9 @@
 ---
-name: ui-variants
+name: ui-buddy
 description: 'When the user wants to explore alternate UI designs for a specific section of a website by generating multiple variants and toggling between them live in the browser. Use when the user says "give me variants of this section," "show alternate designs for the hero," "try 3 versions of this pricing block," "redesign this with options," "A/B the header," "variant toggle," "compare UI options," "cycle through designs," or points to a section and asks for alternatives. Also handles the promote/teardown loop after exploration — "ship variant B", "promote the bento layout", "finalize this variant", "remove the variant exploration", "tear down variants", "revert the variant scaffolding". Generates 2–4 distinct redesigns plus keeps the original, injects a dev-only floating toggle chip, and makes switching realtime with no rebuild. For designing a single UI, use frontend-design. For marketing copy variations, use copywriting.'
 ---
 
-# ui-variants
+# ui-buddy
 
 This skill takes any section of a website and delivers a live A/B/C/D comparison tool in the running page. It (1) generates alternate UI designs for the section with distinct aesthetic directions, (2) injects a dev-only floating toggle, and (3) wires the toggle so clicking or pressing `1`/`2`/`3`… swaps variants **in realtime in the browser** — no rebuild, no manual swap.
 
@@ -108,7 +108,7 @@ Wrap the section's render site with a `VariantSwitcher` that:
   - Frameworks with bundlers: `process.env.NODE_ENV !== 'production' || new URLSearchParams(location.search).has('variants')`
   - Vanilla HTML: `location.hostname === 'localhost' || location.search.includes('variants=1')`
   - When the gate is false, render the original directly with zero runtime cost.
-- Reads current variant from `localStorage` (key: `ui-variant:<section-id>`), defaults to `original`.
+- Reads current variant from `localStorage` (key: `ui-buddy:<section-id>`), defaults to `original`.
 - Renders the floating toggle chip (Step 5).
 - Renders the selected variant in place.
 - On click: updates state and `localStorage` → realtime re-render.
@@ -157,8 +157,8 @@ If you have access to Chrome DevTools MCP tools, use them to take screenshots of
 
 Tell the user:
 
-- **To promote a variant**: run `/ui-variants promote <section> <variant>` — the skill replaces the original with the chosen variant, cleans up losing variants and switcher scaffolding, and shows a per-file plan before editing. See [Promote workflow](#promote-workflow).
-- **To remove entirely**: run `/ui-variants reject <section>` — restores pre-skill state. The original section file was never modified, so it's already correct. See [Reject workflow](#reject-workflow).
+- **To promote a variant**: run `/ui-buddy promote <section> <variant>` — the skill replaces the original with the chosen variant, cleans up losing variants and switcher scaffolding, and shows a per-file plan before editing. See [Promote workflow](#promote-workflow).
+- **To remove entirely**: run `/ui-buddy reject <section>` — restores pre-skill state. The original section file was never modified, so it's already correct. See [Reject workflow](#reject-workflow).
 - **To add more variants later**: re-invoke this skill on the same section; it will append `VariantD` (and so on) alongside the existing ones.
 - **Keyboard shortcuts for review**: `1..N` applies option N to the section currently in the viewport (1 = Original, 2 = first variant, 3 = second, …). `V` hides/shows all chips for screenshotting. Selections round-trip via `?<section-id>=<key>` so URLs are shareable.
 
@@ -174,26 +174,26 @@ Tell the user:
 
 ## Promote workflow
 
-Invoked as `/ui-variants promote <section> [variant]`, or via natural-language equivalents ("ship variant B", "finalize the bento layout for features"). The user has picked a winner; finalize it by replacing the original with the variant's contents, deleting losing variants, and tearing down the switcher scaffolding **for that section only**.
+Invoked as `/ui-buddy promote <section> [variant]`, or via natural-language equivalents ("ship variant B", "finalize the bento layout for features"). The user has picked a winner; finalize it by replacing the original with the variant's contents, deleting losing variants, and tearing down the switcher scaffolding **for that section only**.
 
 ### Step P1 — Parse the command
 
-- `<section>` — match against `data-uiv-section` (Vanilla) or the `sectionId` prop (framework). Slug the user's input if needed.
-- `<variant>` — accept either (a) the variant key (`a`, `b`, `c`, …) or (b) the direction name slugified (e.g., `bento-dispatch` matches `data-uiv-names: {"a":"Bento Dispatch"}`). Case-insensitive.
+- `<section>` — match against `data-uib-section` (Vanilla) or the `sectionId` prop (framework). Slug the user's input if needed.
+- `<variant>` — accept either (a) the variant key (`a`, `b`, `c`, …) or (b) the direction name slugified (e.g., `bento-dispatch` matches `data-uib-names: {"a":"Bento Dispatch"}`). Case-insensitive.
 - If `<variant>` is missing or ambiguous, list the candidates and ask with `AskUserQuestion`. Don't guess.
 
 ### Step P2 — Discovery (read-only, before any edit)
 
 Read, in this order:
 
-1. The HTML or component file holding the target section — note markup, the `data-uiv-section` / `data-uiv-names` attrs, and any inline `<script>` tags that exist only because of specific variants (e.g., a live clock driving a variant-only element).
-2. **Vanilla**: each `<template data-uiv-for="<section>" ...>` sibling — one is the winner, the rest are losers. **Framework**: each variant component file (`*VariantA.tsx`, …) and the switcher wrapper at the call site.
-3. The CSS file with variant-scoped blocks (`ui-variants.css` or equivalent):
+1. The HTML or component file holding the target section — note markup, the `data-uib-section` / `data-uib-names` attrs, and any inline `<script>` tags that exist only because of specific variants (e.g., a live clock driving a variant-only element).
+2. **Vanilla**: each `<template data-uib-for="<section>" ...>` sibling — one is the winner, the rest are losers. **Framework**: each variant component file (`*VariantA.tsx`, …) and the switcher wrapper at the call site.
+3. The CSS file with variant-scoped blocks (`ui-buddy.css` or equivalent):
    - Blocks scoped to the winner: `.<section>[data-variant="<winner-key>"] ...`
    - Blocks scoped to losers.
-   - Shared chip styles (`.uiv-chip*`) — always preserved.
+   - Shared chip styles (`.uib-chip*`) — always preserved.
    - Font `@import` URLs at the top — for each font, grep the file to see which scoped blocks use it. A font used only by losers is orphaned and removable; one also used by the winner or elsewhere is kept.
-4. The switcher source + any `<script src="...">` / `<link rel="stylesheet" href="...">` tags — note whether **any other section** still has `data-uiv-section` or still registers with the switcher. Use `grep -r 'data-uiv-section'` across the codebase to be sure.
+4. The switcher source + any `<script src="...">` / `<link rel="stylesheet" href="...">` tags — note whether **any other section** still has `data-uib-section` or still registers with the switcher. Use `grep -r 'data-uib-section'` across the codebase to be sure.
 
 ### Step P3 — Plan (print before editing)
 
@@ -204,21 +204,21 @@ Promoting `features` → Bento Dispatch (key: a).
 
 HTML (demo.html):
   - Replace .features inner markup with Variant A template contents.
-  - Remove data-uiv-section / data-uiv-names attrs from .features.
-  - Remove <template data-uiv-for="features" data-uiv-variant="b">.
+  - Remove data-uib-section / data-uib-names attrs from .features.
+  - Remove <template data-uib-for="features" data-uib-variant="b">.
   - Remove inline <script> for [data-fvb-clock] (used only by variant B).
 
-CSS (ui-variants.css):
+CSS (ui-buddy.css):
   - Rewrite 10 selectors: `.features[data-variant="a"] .fva__*` → `.features .fva__*`.
   - Delete .features[data-variant="b"] .fvb__* block (~180 lines).
   - Keep Google Fonts @import for Fraunces + JetBrains Mono (winner uses them).
   - Remove Unbounded + IBM Plex Mono from @import (only variant B used them).
 
-JS (ui-variants.js):
+JS (ui-buddy.js):
   - Unchanged. Other sections (hero, testimonial) still use the switcher.
 
 Other script/link tags:
-  - Unchanged (other sections still need `ui-variants.js` + `ui-variants.css`).
+  - Unchanged (other sections still need `ui-buddy.js` + `ui-buddy.css`).
 ```
 
 ### Step P4 — Confirm
@@ -238,9 +238,9 @@ After explicit confirmation:
   - Delete loser blocks entirely.
   - Remove orphaned `@import` URLs from the top of the file.
 - For framework: replace the `<VariantSwitcher ...>` at the call site with a plain mount of the winner component; delete losing variant files. Optionally rename the winning file to the original's name — **confirm with user before renaming**, some teams want to keep the "Variant" suffix as a changelog marker.
-- Tear down the switcher infra **only if** no other section still uses it. If `grep -r 'data-uiv-section'` returns zero hits after your HTML edits, then:
-  - Remove the `<script src="ui-variants.js">` and `<link rel="stylesheet" href="ui-variants.css">`.
-  - Delete `ui-variants.js`, `ui-variants.css`, `variant-switcher-shared.ts`, `VariantSwitcher.*`.
+- Tear down the switcher infra **only if** no other section still uses it. If `grep -r 'data-uib-section'` returns zero hits after your HTML edits, then:
+  - Remove the `<script src="ui-buddy.js">` and `<link rel="stylesheet" href="ui-buddy.css">`.
+  - Delete `ui-buddy.js`, `ui-buddy.css`, `variant-switcher-shared.ts`, `VariantSwitcher.*`.
 
 ### Step P6 — Post-execution report
 
@@ -253,11 +253,11 @@ Summarize:
 
 ## Reject workflow
 
-Invoked as `/ui-variants reject <section>`, or via natural-language equivalents ("tear down variants on features", "revert the variant exploration"). The user is abandoning this exploration; restore byte-identical pre-skill state.
+Invoked as `/ui-buddy reject <section>`, or via natural-language equivalents ("tear down variants on features", "revert the variant exploration"). The user is abandoning this exploration; restore byte-identical pre-skill state.
 
 ### Step R1 — Parse and warn
 
-If the user didn't name a section, list sections currently under variant exploration (grep for `data-uiv-section`) and ask which one. Before executing, remind them the variant work is about to be deleted — ask for confirmation unless they already said "force" / "no prompt" / similar.
+If the user didn't name a section, list sections currently under variant exploration (grep for `data-uib-section`) and ask which one. Before executing, remind them the variant work is about to be deleted — ask for confirmation unless they already said "force" / "no prompt" / similar.
 
 ### Step R2 — Discovery
 
@@ -271,14 +271,14 @@ Print a per-file deletion plan. The **section itself is preserved** — the skil
 
 After confirmation:
 
-- Delete all `<template data-uiv-for="<section>" ...>` blocks (Vanilla).
+- Delete all `<template data-uib-for="<section>" ...>` blocks (Vanilla).
 - Delete all variant component files for the section (framework): `<Section>VariantA.tsx`, `<Section>VariantB.tsx`, etc. Use the naming pattern established in Step 3 of the generate workflow.
 - Delete `.<section>[data-variant="..."] ...` CSS blocks (all of them — no winner).
-- Delete `data-uiv-section` and `data-uiv-names` attrs from the section element.
+- Delete `data-uib-section` and `data-uib-names` attrs from the section element.
 - Delete inline `<script>` tags added only for variant-specific features.
 - Delete font `@import`s used only by the deleted blocks.
 - Revert the switcher wrapper at the component call site (framework).
-- If no other sections use the switcher anywhere in the codebase (grep to verify), tear down the shared infra: delete `ui-variants.js`, `ui-variants.css`, `variant-switcher-shared.ts`, `VariantSwitcher.*`, and remove their `<script>` / `<link>` tags.
+- If no other sections use the switcher anywhere in the codebase (grep to verify), tear down the shared infra: delete `ui-buddy.js`, `ui-buddy.css`, `variant-switcher-shared.ts`, `VariantSwitcher.*`, and remove their `<script>` / `<link>` tags.
 
 ### Step R5 — Post-execution
 
